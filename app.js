@@ -404,7 +404,7 @@
     app.appendChild(el('h1', 'q-title', 'Так расскажет про тебя:'));
     var card = el('div', 'report', buildReport());
     app.appendChild(card);
-    app.appendChild(el('p', 'hint-text', 'Нажав «Отправить», ты закроешь приложение — результат уйдёт партнёру.'));
+    app.appendChild(el('p', 'hint-text', 'Нажми «Отправить партнёру» — откроется чат с ботом с готовым текстом результата. Просто отправь его.'));
 
     // Диагностика: что приложение видит про Telegram (для отладки)
     var diag = el('div', 'hint-text');
@@ -417,27 +417,20 @@
     err.style.cssText = 'margin-top:10px;font-size:13px;line-height:1.4;color:#c0392b;background:rgba(192,57,43,.08);border-radius:10px;padding:10px 12px;display:none;';
     app.appendChild(err);
 
-    var nav = el('div', 'nav');
-    var back = el('button', 'btn btn-back', '← Назад');
+    // Маленькая ссылка «назад» над большой кнопкой
+    var back = el('button', 'link-back', '← Пройти ещё раз');
     back.addEventListener('click', function () {
       current = QUESTIONS.length - 1;
       renderQuestion();
     });
-    nav.appendChild(back);
+    app.appendChild(back);
 
-    var send = el('button', 'btn btn-next', '⬆️ Отправить');
-    send.addEventListener('click', sendReport);
-    nav.appendChild(send);
-
-    app.appendChild(nav);
-
-    // Запасной способ: откроет чат с ботом с готовым текстом результата
-    var manual = el('button', 'btn btn-full', 'Не отправляется? Открыть чат с готовым текстом');
-    manual.addEventListener('click', function () {
-      haptic('selectionChanged');
+    var send = el('button', 'btn btn-send', '📨 Отправить партнёру');
+    send.addEventListener('click', function () {
+      haptic('notificationOccurred', 'success');
       location.href = BOT_URL + '?text=' + encodeURIComponent('КАРТА| ' + buildReport());
     });
-    app.appendChild(manual);
+    app.appendChild(send);
   }
 
   /* ------------------------------ Отправка ------------------------------ */
