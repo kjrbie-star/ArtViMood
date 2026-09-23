@@ -4,6 +4,10 @@
   // Telegram.WebApp доступен только внутри Telegram. В браузере tg = undefined.
   var tg = window.Telegram && window.Telegram.WebApp;
 
+  // Имя бота — для «ручного» способа доставки, если sendData не сработал
+  var BOT_USERNAME = 'ArtViMood_bot';
+  var BOT_URL = 'https://t.me/' + BOT_USERNAME;
+
   /* ------------------------------------------------------------------------
      Вопросы. Для вариантных вопросов у каждого ответа может быть `sentence` —
      готовое предложение, которое попадёт в итоговый текст.
@@ -426,6 +430,14 @@
     nav.appendChild(send);
 
     app.appendChild(nav);
+
+    // Запасной способ: откроет чат с ботом с готовым текстом результата
+    var manual = el('button', 'btn btn-full', 'Не отправляется? Открыть чат с готовым текстом');
+    manual.addEventListener('click', function () {
+      haptic('selectionChanged');
+      location.href = BOT_URL + '?text=' + encodeURIComponent('КАРТА| ' + buildReport());
+    });
+    app.appendChild(manual);
   }
 
   /* ------------------------------ Отправка ------------------------------ */
