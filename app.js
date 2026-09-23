@@ -166,6 +166,17 @@
     return null;
   }
 
+  // Для отладки: что приложение видит про Telegram
+  function tgStatus() {
+    var hasApi = !!(window.Telegram && window.Telegram.WebApp);
+    var hasSend = hasApi && typeof tg.sendData === 'function';
+    var user = 'нет';
+    if (hasApi && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      user = tg.initDataUnsafe.user.first_name || 'есть';
+    }
+    return 'api=' + (hasApi ? 'есть' : 'НЕТ') + '; sendData=' + (hasSend ? 'есть' : 'НЕТ') + '; user=' + user;
+  }
+
   /* --------------------------- Логика вопросов --------------------------- */
   function canContinue() {
     var q = QUESTIONS[current];
@@ -391,6 +402,17 @@
     app.appendChild(card);
     app.appendChild(el('p', 'hint-text', 'Нажав «Отправить», ты закроешь приложение — результат уйдёт партнёру.'));
 
+    // Диагностика: что приложение видит про Telegram (для отладки)
+    var diag = el('div', 'hint-text');
+    diag.id = 'tg-status';
+    diag.textContent = 'Статус: ' + tgStatus();
+    app.appendChild(diag);
+
+    var err = el('div');
+    err.id = 'send-error';
+    err.style.cssText = 'margin-top:10px;font-size:13px;line-height:1.4;color:#c0392b;background:rgba(192,57,43,.08);border-radius:10px;padding:10px 12px;display:none;';
+    app.appendChild(err);
+
     var nav = el('div', 'nav');
     var back = el('button', 'btn btn-back', '← Назад');
     back.addEventListener('click', function () {
@@ -425,17 +447,30 @@
 
   function sendReport() {
     var payload = buildPayload();
+    var errBox = document.getElementById('send-error');
 
     // В браузере sendData нет — покажем, что именно ушло бы.
     if (!tg || typeof tg.sendData !== 'function') {
-      alert('Это работает только внутри Telegram.\n\nСодержимое:\n\n' + payload);
+      if (errBox) {
+        errBox.style.display = 'block';
+        errBox.textContent = 'НЕ МОЖЕМ ОТПРАВИТЬ: приложение не видит Telegram (sendData отсутствует). Статус: ' + tgStatus();
+      } else {
+        alert('Это работает только внутри Telegram.\n\nСодержимое:\n\n' + payload);
+      }
       return;
     }
 
-    haptic('notificationOccurred', 'success');
-    // sendData закрывает Mini App и шлёт данные боту как
-    // message.web_app_data.data (JSON-строка, ≤ 4096 байт).
-    tg.sendData(payload);
+    try {
+      haptic('notificationOccurred', 'success');
+      // sendData закрывает Mini App и шлёт данные боту как
+      // message.web_app_data.data (JSON-строка, ≤ 4096 байт).
+      tg.sendData(payload);
+    } catch (e) {
+      if (errBox) {
+        errBox.style.display = 'block';
+        errBox.textContent = 'Ошибка отправки: ' + e.message;
+      }
+    }
   }
 
   /* ------------------------------ Запуск ------------------------------ */
